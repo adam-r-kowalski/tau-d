@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/tau
+tau.so
+tau.dylib
+tau.dll
+tau.a
+tau.lib
+tau-test-*
+*.exe
+*.o
+*.obj
+*.lst

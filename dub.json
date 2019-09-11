@@ -1,0 +1,17 @@
+{
+  "authors": [
+    "Adam Kowalski"
+  ],
+  "copyright": "Copyright © 2019, Adam Kowalski",
+  "description": "A minimal D application.",
+  "license": "proprietary",
+  "name": "tau",
+  "configurations": [
+    {
+      "name": "unittest",
+      "targetType": "executable",
+      "buildOptions": ["betterC"],
+      "mainSourceFile": "source/app.d"
+    }
+  ]
+}
