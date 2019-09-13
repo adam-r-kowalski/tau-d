@@ -1,6 +1,8 @@
-import tensor;
+import a;
 
-extern (C) void main() {
-  static foreach (u; __traits(getUnitTests, __traits(parent, tensor)))
+extern (C) int main() {
+  static foreach (u; __traits(getUnitTests, a))
     u();
+
+  return 0;
 }

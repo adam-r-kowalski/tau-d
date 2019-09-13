@@ -10,7 +10,6 @@
     {
       "name": "unittest",
       "targetType": "executable",
-      "buildOptions": ["betterC"],
       "mainSourceFile": "source/app.d"
     }
   ]
