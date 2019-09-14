@@ -1,8 +1,8 @@
 unittest {
   import b : isShape;
 
-  assert(Square(5).area == 25);
-  assert(isShape!Square);
+  static assert(Square(5).area == 25);
+  static assert(isShape!Square);
 }
 
 /// Square
@@ -20,8 +20,8 @@ struct Square {
 unittest {
   import b : isShape;
 
-  assert(Triangle(3, 5).area == 7.5);
-  assert(isShape!Triangle);
+  static assert(Triangle(3, 5).area == 7.5);
+  static assert(isShape!Triangle);
 }
 
 /// Triangle
@@ -38,8 +38,8 @@ struct Triangle {
 unittest {
   import b : isShape;
 
-  assert(Circle(8).area == 5);
-  static assert(isShape!Circle);
+  static assert(Circle(8).area == 5);
+  // static assert(isShape!Circle);
 }
 
 /// Circle
