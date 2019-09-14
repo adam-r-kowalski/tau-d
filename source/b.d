@@ -12,7 +12,7 @@ template isShape(T) {
 
 /// ModuleOf
 template ModuleOf(alias T) {
-  import std.traits : moduleName;
+  import traits : moduleName;
 
   mixin("import " ~ moduleName!T ~ ";");
   mixin("alias ModuleOf = " ~ moduleName!T ~ ";");

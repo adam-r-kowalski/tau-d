@@ -30,16 +30,18 @@ struct Triangle {
   int height; /// height
 
   /// area
-  @property float area() {
+  @property float area() const {
     return base * height / 2.0;
   }
 }
 
 unittest {
+  import std.math : abs;
+
   import b : isShape;
 
-  static assert(Circle(8).area == 5);
-  // static assert(isShape!Circle);
+  static assert(abs(Circle(8).area - 201.0619298297) < 0.0000001);
+  static assert(isShape!Circle);
 }
 
 /// Circle
@@ -48,8 +50,10 @@ struct Circle {
 }
 
 /// area
-int area(Circle) {
-  return 5;
+float area()(ref const auto Circle c) {
+  import std.math : PI;
+
+  return PI * c.radius ^^ 2;
 }
 
 unittest {
