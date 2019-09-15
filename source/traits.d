@@ -1,28 +1,37 @@
+unittest {
+  import std.array : staticArray;
+  import std.algorithm : fold;
+  import std.stdio : printf;
+
+  static assert(moduleName!fold == "std.algorithm.iteration");
+  static assert(moduleName!staticArray == "std.array");
+  static assert(moduleName!printf == "core.stdio");
+  static assert(!__traits(compiles, moduleName!int));
+  static assert(!__traits(compiles, moduleName!string));
+}
+
 /// moduleName
 template moduleName(alias T) {
-  import std.traits : TemplateOf;
+  alias parent(alias T) = __traits(parent, T);
 
-  enum isTopLevel(alias E) = !__traits(compiles, __traits(parent, E));
-  enum isPackage(alias E) = __traits(isPackage, E);
-  enum isModule(alias E) = __traits(isModule, E);
-  enum isTemplateInstance(alias E) = __traits(compiles, TemplateArgsOf!E);
-
-  alias parentOf(alias E) = __traits(parent, E);
-
-  string getModule(alias E)() {
-    static if (isModule!E)
-      static if (isTopLevel!E)
-        static if (isPackage!E)
-          return E.stringof[8 .. $];
-        else
-          return E.stringof[7 .. $];
-      else
-        return moduleName!(parentOf!E) ~ "." ~ E.stringof[7 .. $];
-    else static if (isTemplateInstance!E)
-      return getModule(TemplateOf!E);
+  string trimModuleName(alias T)() {
+    static if (__traits(isPackage, T))
+      return T.stringof[8 .. $];
     else
-      return getModule!(parentOf!E);
+      return T.stringof[7 .. $];
   }
 
-  enum moduleName = getModule!T;
+  static if (__traits(compiles, parent!T))
+    static if (__traits(isModule, T))
+      enum string moduleName = moduleName!(parent!T) ~ "." ~ trimModuleName!T;
+    else
+      enum string moduleName = moduleName!(parent!T);
+  else
+    enum string moduleName = trimModuleName!T;
+}
+
+/// moduleOf
+template moduleOf(alias T) {
+  mixin("import " ~ moduleName!T ~ ";");
+  mixin("alias moduleOf = " ~ moduleName!T ~ ";");
 }
