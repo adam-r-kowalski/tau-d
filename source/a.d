@@ -1,6 +1,7 @@
-unittest {
-  import b : isShape;
+import b : isShape;
+import c : Rectangle;
 
+unittest {
   static assert(Square(5).area == 25);
   static assert(isShape!Square);
 }
@@ -18,8 +19,6 @@ struct Square {
 }
 
 unittest {
-  import b : isShape;
-
   static assert(Triangle(3, 5).area == 7.5);
   static assert(isShape!Triangle);
 }
@@ -38,8 +37,6 @@ struct Triangle {
 unittest {
   import std.math : abs;
 
-  import b : isShape;
-
   static assert(abs(Circle(8).area - 201.0619298297) < 0.0000001);
   static assert(isShape!Circle);
 }
@@ -57,11 +54,19 @@ float area()(ref const auto Circle c) {
 }
 
 unittest {
-  import b : isShape;
-
   static assert(!isShape!int);
   static assert(!isShape!float);
   static assert(!isShape!char);
   static assert(!isShape!bool);
   static assert(!isShape!(int[3]));
+}
+
+unittest {
+  static assert(Rectangle(5, 10).area == 50);
+  static assert(isShape!Rectangle);
+}
+
+/// area
+int area()(ref auto const Rectangle r) {
+  return r.width * r.height;
 }
