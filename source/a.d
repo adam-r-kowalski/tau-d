@@ -35,9 +35,9 @@ struct Triangle {
 }
 
 unittest {
-  import std.math : abs;
+  import std.math : approxEqual;
 
-  static assert(abs(Circle(8).area - 201.0619298297) < 0.0000001);
+  static assert(approxEqual(Circle(8).area, 201.0619298297));
   static assert(isShape!Circle);
 }
 
@@ -69,4 +69,15 @@ unittest {
 /// area
 int area()(ref auto const Rectangle r) {
   return r.width * r.height;
+}
+
+unittest {
+  import std.math : approxEqual;
+
+  import meta : adl;
+
+  static assert(adl!"area"(Square(10)) == 100);
+  static assert(adl!"area"(Triangle(5, 10)) == 25);
+  static assert(approxEqual(adl!"area"(Circle(5)), 78.5398163397));
+  static assert(adl!"area"(Rectangle(5, 10)) == 50);
 }
