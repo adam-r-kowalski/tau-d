@@ -76,8 +76,10 @@ unittest {
 
   import meta : adl;
 
-  static assert(adl!"area"(Square(10)) == 100);
-  static assert(adl!"area"(Triangle(5, 10)) == 25);
-  static assert(approxEqual(adl!"area"(Circle(5)), 78.5398163397));
-  static assert(adl!"area"(Rectangle(5, 10)) == 50);
+  alias area = adl!"area";
+
+  static assert(Square(10).area == 100);
+  static assert(Triangle(5, 10).area == 25);
+  static assert(approxEqual(Circle(5).area, 78.5398163397));
+  static assert(Rectangle(5, 10).area == 50);
 }
