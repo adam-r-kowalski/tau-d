@@ -36,3 +36,16 @@ template moduleOf(alias T) {
   mixin("import " ~ moduleName!T ~ ";");
   mixin("alias moduleOf = " ~ moduleName!T ~ ";");
 }
+
+/// isTensor
+template isTensor(T, string moduleName = __MODULE__) {
+  import std.traits : isArray;
+
+  import meta : adl;
+
+  alias shape = adl!("shape", moduleName);
+  static if (is(typeof(T.init.shape)))
+    enum bool isTensor = isArray!(typeof(T.init.shape));
+  else
+    enum bool isTensor = false;
+}

@@ -10,9 +10,9 @@ template adl(string fun, string moduleName = __MODULE__) {
     else {
       mixin("import " ~ moduleName ~ ";");
       static assert(__traits(compiles, mixin(moduleName ~ "." ~ fun ~ "(t)")),
-          "adl lookup failed for function " ~ fun ~ " in module " ~ moduleName);
+          "adl lookup failed for function " ~ fun ~ " for type " ~ T.stringof
+          ~ " in module " ~ moduleName);
       return mixin(moduleName ~ "." ~ fun ~ "(t)");
     }
   }
 }
-
