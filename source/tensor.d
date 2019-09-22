@@ -1,3 +1,5 @@
+@nogc @safe pure nothrow:
+
 import traits : isTensor;
 
 unittest {
@@ -19,7 +21,6 @@ unittest {
 }
 
 unittest {
-
   static assert(isTensor!(Tensor!(int, 4, 5, 7)));
   static assert(isTensor!(Tensor!(float, 3, 2, 7)));
   static assert(!isTensor!int);

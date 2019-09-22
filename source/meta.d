@@ -1,3 +1,5 @@
+@nogc @safe pure nothrow:
+
 /// adl
 template adl(string fun, string moduleName = __MODULE__) {
   auto adl(T)(ref auto T t) {

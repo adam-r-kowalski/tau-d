@@ -1,3 +1,5 @@
+@nogc @safe pure nothrow:
+
 unittest {
   import std.array : staticArray;
   import std.algorithm : fold;
