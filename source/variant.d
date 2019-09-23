@@ -71,10 +71,36 @@ private:
       mixin("T " ~ T.stringof ~ "_;");
   }
 
-  enum Tag {
-    string_tag,
-    float_tag
-  }
+  mixin(generateTag!Ts);
 
   Tag tag_;
+}
+
+unittest {
+  import std.stdio : printf;
+
+  enum expected = "enum Tag {
+  float_tag,
+  string_tag
+}";
+
+  enum actual = generateTag!(float, string);
+
+  static assert(expected == actual);
+}
+
+string generateTag(Ts...)() {
+  enum string tag = () {
+    string result;
+
+    result ~= "enum Tag {\n";
+    static foreach (i; 0 .. Ts.length) {
+      result ~= "  " ~ Ts[i].stringof ~ "_tag";
+      if (Ts.length - i > 1)
+        result ~= ",";
+      result ~= "\n";
+    }
+    return result ~ "}";
+  }();
+  return tag;
 }

@@ -1,5 +1,3 @@
-@nogc @safe pure nothrow:
-
 import traits, tensor, range, variant;
 
 extern (C) int main() {
