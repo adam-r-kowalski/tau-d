@@ -2,104 +2,174 @@
 
 @trusted unittest {
   enum a = Variant!(string, float)("hello");
-  static assert(a.string_ == "hello");
-  static assert(a.tag_ == typeof(a).Tag.string_tag);
+  static assert(a.data_0 == "hello");
+  static assert(a.tag_ == typeof(a).Tag.tag_0);
 
   enum b = Variant!(string, float)(5.3);
-  static assert(b.float_ == 5.3);
-  static assert(b.tag_ == typeof(b).Tag.float_tag);
+  static assert(b.data_1 == 5.3);
+  static assert(b.tag_ == typeof(b).Tag.tag_1);
 }
 
 @trusted unittest {
   const a = Variant!(string, float)("hello");
-  assert(a.string_ == "hello");
-  assert(a.tag_ == typeof(a).Tag.string_tag);
+  assert(a.data_0 == "hello");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
 
   const b = Variant!(string, float)(5.3);
-  assert(b.float_ == cast(float) 5.3);
-  assert(b.tag_ == typeof(b).Tag.float_tag);
+  assert(b.data_1 == cast(float) 5.3);
+  assert(b.tag_ == typeof(b).Tag.tag_1);
 }
 
 @trusted unittest {
   auto a = Variant!(string, float)("hello");
-  assert(a.string_ == "hello");
-  assert(a.tag_ == typeof(a).Tag.string_tag);
+  assert(a.data_0 == "hello");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
 
   a = Variant!(string, float)(3.7);
-  assert(a.float_ == cast(float) 3.7);
-  assert(a.tag_ == typeof(a).Tag.float_tag);
+  assert(a.data_1 == cast(float) 3.7);
+  assert(a.tag_ == typeof(a).Tag.tag_1);
 
   a = Variant!(string, float)("goodbye");
-  assert(a.string_ == "goodbye");
-  assert(a.tag_ == typeof(a).Tag.string_tag);
+  assert(a.data_0 == "goodbye");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
 }
 
 @trusted unittest {
   Variant!(string, float) a = "hello";
-  assert(a.string_ == "hello");
-  assert(a.tag_ == typeof(a).Tag.string_tag);
+  assert(a.data_0 == "hello");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
 
   a = 3.7;
-  assert(a.float_ == cast(float) 3.7);
-  assert(a.tag_ == typeof(a).Tag.float_tag);
+  assert(a.data_1 == cast(float) 3.7);
+  assert(a.tag_ == typeof(a).Tag.tag_1);
 
   a = "goodbye";
-  assert(a.string_ == "goodbye");
-  assert(a.tag_ == typeof(a).Tag.string_tag);
+  assert(a.data_0 == "goodbye");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
+}
+
+@trusted unittest {
+  Variant!(string, float, bool) a = "hello";
+  assert(a.data_0 == "hello");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
+
+  a = 3.7;
+  assert(a.data_1 == cast(float) 3.7);
+  assert(a.tag_ == typeof(a).Tag.tag_1);
+
+  a = false;
+  assert(a.data_2 == false);
+  assert(a.tag_ == typeof(a).Tag.tag_2);
+
+  a = "goodbye";
+  assert(a.data_0 == "goodbye");
+  assert(a.tag_ == typeof(a).Tag.tag_0);
 }
 
 /// Variant
 struct Variant(Ts...) {
 
   /// constructor
-  static foreach (T; Ts)
-    @trusted this(T t) {
-      mixin(T.stringof ~ "_ = t;");
-      mixin("tag_ = Tag." ~ T.stringof ~ "_tag;");
+  static foreach (i; 0 .. Ts.length)
+    @trusted this(Ts[i] _) {
+      mixin(generateAssignment!i);
     }
 
   /// assignment
-  static foreach (T; Ts)
-    @trusted void opAssign(T t) {
-      mixin(T.stringof ~ "_ = t;");
-      mixin("tag_ = Tag." ~ T.stringof ~ "_tag;");
+  static foreach (i; 0 .. Ts.length)
+    @trusted void opAssign(Ts[i] _) {
+      mixin(generateAssignment!i);
     }
 
 private:
   union {
-    static foreach (T; Ts)
-      mixin("T " ~ T.stringof ~ "_;");
+    static foreach (i; 0 .. Ts.length)
+      mixin(generateUnion!i);
   }
 
-  mixin(generateTag!Ts);
+  mixin(generateEnum!(Ts.length));
 
   Tag tag_;
 }
 
-unittest {
-  import std.stdio : printf;
+private:
 
+unittest {
+  enum expected = "data_0 = _;
+tag_ = Tag.tag_0;";
+
+  enum actual = generateAssignment!0;
+  static assert(expected == actual);
+}
+
+unittest {
+  enum expected = "data_1 = _;
+tag_ = Tag.tag_1;";
+
+  enum actual = generateAssignment!1;
+  static assert(expected == actual);
+}
+
+string generateAssignment(size_t N)() {
+  enum string result = () {
+    enum int n = cast(int) N;
+    string result = "data_" ~ n.stringof ~ " = _;\n";
+    result ~= "tag_ = Tag.tag_" ~ n.stringof ~ ";";
+    return result;
+  }();
+  return result;
+}
+
+unittest {
+  enum expected = "Ts[i] data_0;";
+  enum actual = generateUnion!0;
+  static assert(expected == actual);
+}
+
+unittest {
+  enum expected = "Ts[i] data_1;";
+  enum actual = generateUnion!1;
+  static assert(expected == actual);
+}
+
+string generateUnion(size_t N)() {
+  enum string result = () {
+    enum int n = cast(int) N;
+    return "Ts[i] data_" ~ n.stringof ~ ";";
+  }();
+  return result;
+}
+
+unittest {
   enum expected = "enum Tag {
-  float_tag,
-  string_tag
+  tag_0,
+  tag_1,
 }";
 
-  enum actual = generateTag!(float, string);
+  enum actual = generateEnum!2;
 
   static assert(expected == actual);
 }
 
-string generateTag(Ts...)() {
+unittest {
+  enum expected = "enum Tag {
+  tag_0,
+  tag_1,
+  tag_2,
+}";
+
+  enum actual = generateEnum!3;
+
+  static assert(expected == actual);
+}
+
+/// generateTag
+string generateEnum(size_t N)() {
   enum string tag = () {
     string result;
-
     result ~= "enum Tag {\n";
-    static foreach (i; 0 .. Ts.length) {
-      result ~= "  " ~ Ts[i].stringof ~ "_tag";
-      if (Ts.length - i > 1)
-        result ~= ",";
-      result ~= "\n";
-    }
+    static foreach (i; 0 .. cast(int) N)
+      result ~= "  tag_" ~ i.stringof ~ ",\n";
     return result ~ "}";
   }();
   return tag;
