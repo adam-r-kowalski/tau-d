@@ -92,17 +92,16 @@ private:
   Tag tag_;
 }
 
-template match(funs...) {
-  template fun(alias T) {
-    alias fun = funs[0];
-  }
+unittest {
+  enum Variant!(string, bool, float) a = false;
+  static assert(a.match!((string _) => 1, (bool _) => 2, (float _) => 3) == 2);
 
-  @trusted auto match(Ts...)(auto ref const Variant!Ts v) {
-    return () { mixin(generateSwitch!(Ts.length)); }();
-  }
+  enum Variant!(string, bool, float) b = "hello";
+  static assert(b.match!((string _) => 1, (bool _) => 2, (float _) => 3) == 1);
+
+  enum Variant!(string, bool, float) c = 7.3;
+  static assert(c.match!((string _) => 1, (bool _) => 2, (float _) => 3) == 3);
 }
-
-private:
 
 version (unittest) {
   int f(string) {
@@ -128,6 +127,31 @@ unittest {
   enum Variant!(string, float, bool) c = false;
   static assert(c.match!f == 3);
 }
+
+template match(funs...) {
+  template fun(alias T) {
+    import std.meta : Filter;
+
+    enum bool callableWith(alias fun) = is(typeof(fun(T.init)));
+    alias filtered_funs = Filter!(callableWith, funs);
+    static if (filtered_funs.length > 0)
+      alias fun = filtered_funs[0];
+    else {
+      enum string message = () {
+        string message = "\npattern matching failed for type " ~ T.stringof;
+        message ~= "\n" ~ funs.stringof;
+        return message;
+      }();
+      static assert(0, message);
+    }
+  }
+
+  @trusted auto match(Ts...)(auto ref const Variant!Ts v) {
+    return () { mixin(generateSwitch!(Ts.length)); }();
+  }
+}
+
+private:
 
 unittest {
   enum expected = "data_0 = _;
