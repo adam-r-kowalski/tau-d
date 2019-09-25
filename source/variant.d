@@ -92,7 +92,42 @@ private:
   Tag tag_;
 }
 
+template match(funs...) {
+  template fun(alias T) {
+    alias fun = funs[0];
+  }
+
+  @trusted auto match(Ts...)(auto ref const Variant!Ts v) {
+    return () { mixin(generateSwitch!(Ts.length)); }();
+  }
+}
+
 private:
+
+version (unittest) {
+  int f(string) {
+    return 1;
+  }
+
+  int f(float) {
+    return 2;
+  }
+
+  int f(bool) {
+    return 3;
+  }
+}
+
+unittest {
+  enum Variant!(string, float, bool) a = "hello";
+  static assert(a.match!f == 1);
+
+  enum Variant!(string, float, bool) b = 3.5;
+  static assert(b.match!f == 2);
+
+  enum Variant!(string, float, bool) c = false;
+  static assert(c.match!f == 3);
+}
 
 unittest {
   enum expected = "data_0 = _;
@@ -173,4 +208,31 @@ string generateEnum(size_t N)() {
     return result ~ "}";
   }();
   return tag;
+}
+
+unittest {
+  enum string expected = "final switch (v.tag_) with (typeof(v).Tag) {
+case tag_0:
+  return fun!(Ts[0])(v.data_0);
+case tag_1:
+  return fun!(Ts[1])(v.data_1);
+case tag_2:
+  return fun!(Ts[2])(v.data_2);
+}";
+
+  enum string actual = generateSwitch!3;
+
+  static assert(expected == actual);
+}
+
+string generateSwitch(size_t n)() {
+  enum string result = () {
+    string result = "final switch (v.tag_) with (typeof(v).Tag) {\n";
+    static foreach (int i; 0 .. n) {
+      result ~= "case tag_" ~ i.stringof ~ ":\n";
+      result ~= "  return fun!(Ts[" ~ i.stringof ~ "])(v.data_" ~ i.stringof ~ ");\n";
+    }
+    return result ~ "}";
+  }();
+  return result;
 }
