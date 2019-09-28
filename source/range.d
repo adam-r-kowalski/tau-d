@@ -87,7 +87,7 @@ unittest {
 template map(alias fun, Range) if (isForwardRange!Range) {
   import std.functional : unaryFun;
 
-  import optional : Optional, Nothing;
+  import optional : Optional, Nothing, map;
   import variant : match;
 
   alias f = unaryFun!fun;
@@ -96,7 +96,7 @@ template map(alias fun, Range) if (isForwardRange!Range) {
 
   struct Map {
     Optional!U next() {
-      return range.next().match!((T t) => Optional!U(f(t)), (Nothing _) => Optional!U(Nothing()));
+      return range.next().map!((T t) => f(t));
     }
 
   private:

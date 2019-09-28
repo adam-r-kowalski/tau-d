@@ -36,3 +36,39 @@ unittest {
 }
 
 alias ElementType(T : Variant!(U, Nothing), U) = U;
+
+unittest {
+  enum a = Optional!int(5);
+  enum b = a.map!"a^^2";
+  static assert(b.match!((int x) => x == 25, _ => false));
+}
+
+unittest {
+  enum a = Optional!int(7);
+  enum b = a.map!"a^^2";
+  static assert(b.match!((int x) => x == 49, _ => false));
+}
+
+unittest {
+  enum a = Optional!int(Nothing());
+  enum b = a.map!"a^^2";
+  static assert(b.match!((int) => false, _ => true));
+}
+
+/// map 
+template map(alias fun, O) if (isOptional!O) {
+  import std.functional : unaryFun;
+
+  alias f = unaryFun!fun;
+  alias T = ElementType!O;
+  alias U = typeof(f(T.init));
+
+  Optional!U map(O optional) {
+    // dfmt off
+    return optional.match!(
+      (T t) => Optional!U(f(t)),
+      _ => Optional!U(Nothing())
+    );
+    // dfmt on
+  }
+}
