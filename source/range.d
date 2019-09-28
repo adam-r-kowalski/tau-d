@@ -153,7 +153,7 @@ unittest {
   import std.array : staticArray;
 
   const xs = [1, 5, 3, 2, 4].staticArray;
-  assert(xs.iterate.fold!"a + b"(0) == 0);
+  assert(xs.iterate.fold!"a + b"(0) == 15);
 }
 
 /// fold
@@ -166,9 +166,23 @@ template fold(alias reducer, Range, U) if (isForwardRange!Range) {
   alias r = binaryFun!reducer;
   alias T = ElementType!Range;
 
-  U fold(Range range, U acc) {
-    while (range.next().match!((T t) { acc = r(acc, t); return true; }, _ => false)) {
+  struct Acc {
+    bool step(T x) {
+      value = r(value, x);
+      return true;
     }
-    return acc;
+
+    bool step(Nothing) {
+      return false;
+    }
+
+    U value;
+  }
+
+  U fold(Range range, U initial) {
+    auto acc = Acc(initial);
+    while (range.next().match!(a => acc.step(a))) {
+    }
+    return acc.value;
   }
 }
