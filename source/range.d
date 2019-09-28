@@ -38,14 +38,14 @@ unittest {
   import variant : match;
 
   const xs = [1, 5, 3, 2].staticArray;
-  auto iterator = xs.iterate;
-  assert(iterator.next().match!((int x) => x == 1, _ => false));
-  assert(iterator.next().match!((int x) => x == 5, _ => false));
-  assert(iterator.next().match!((int x) => x == 3, _ => false));
-  assert(iterator.next().match!((int x) => x == 2, _ => false));
-  assert(iterator.next().match!((int) => false, _ => true));
-  assert(iterator.next().match!((int) => false, _ => true));
-  assert(iterator.next().match!((int) => false, _ => true));
+  auto range = xs.iterate;
+  assert(range.next().match!((int x) => x == 1, _ => false));
+  assert(range.next().match!((int x) => x == 5, _ => false));
+  assert(range.next().match!((int x) => x == 3, _ => false));
+  assert(range.next().match!((int x) => x == 2, _ => false));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
 }
 
 /// iterate
@@ -73,38 +73,38 @@ unittest {
   import variant : match;
 
   const xs = [1, 5, 3, 2].staticArray;
-  auto iterator = xs.iterate.map!"a^^2";
-  assert(iterator.next().match!((int x) => x == 1, _ => false));
-  assert(iterator.next().match!((int x) => x == 25, _ => false));
-  assert(iterator.next().match!((int x) => x == 9, _ => false));
-  assert(iterator.next().match!((int x) => x == 4, _ => false));
-  assert(iterator.next().match!((int) => false, _ => true));
-  assert(iterator.next().match!((int) => false, _ => true));
-  assert(iterator.next().match!((int) => false, _ => true));
+  auto range = xs.iterate.map!"a^^2";
+  assert(range.next().match!((int x) => x == 1, _ => false));
+  assert(range.next().match!((int x) => x == 25, _ => false));
+  assert(range.next().match!((int x) => x == 9, _ => false));
+  assert(range.next().match!((int x) => x == 4, _ => false));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
 }
 
 /// map
-template map(alias fun, Iterator) {
+template map(alias fun, Range) if (isForwardRange!Range) {
   import std.functional : unaryFun;
 
   import optional : Optional, Nothing;
   import variant : match;
 
   alias f = unaryFun!fun;
-  alias T = ElementType!Iterator;
+  alias T = ElementType!Range;
   alias U = typeof(f(T.init));
 
   struct Map {
     Optional!U next() {
-      return iterator.next().match!((T t) => Optional!U(f(t)), (Nothing _) => Optional!U(Nothing()));
+      return range.next().match!((T t) => Optional!U(f(t)), (Nothing _) => Optional!U(Nothing()));
     }
 
   private:
-    Iterator iterator;
+    Range range;
   }
 
-  Map map(Iterator iterator) {
-    return Map(iterator);
+  Map map(Range range) {
+    return Map(range);
   }
 }
 
@@ -114,34 +114,61 @@ unittest {
   import variant : match;
 
   const xs = [1, 5, 3, 2, 4].staticArray;
-  auto iterator = xs.iterate.filter!"a % 2 == 0";
-  assert(iterator.next().match!((int x) => x == 2, _ => false));
-  assert(iterator.next().match!((int x) => x == 4, _ => false));
+  auto range = xs.iterate.filter!"a % 2 == 0";
+  assert(range.next().match!((int x) => x == 2, _ => false));
+  assert(range.next().match!((int x) => x == 4, _ => false));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
+  assert(range.next().match!((int) => false, _ => true));
 }
 
 /// filter
-template filter(alias pred, Iterator) {
+template filter(alias pred, Range) if (isForwardRange!Range) {
   import std.functional : unaryFun;
 
   import optional : Optional, Nothing;
   import variant : match;
 
   alias p = unaryFun!pred;
-  alias T = ElementType!Iterator;
+  alias T = ElementType!Range;
 
   struct Filter {
     Optional!T next() {
-      auto n = iterator.next();
+      auto n = range.next();
       while (!n.match!((T t) => p(t), _ => true))
-        n = iterator.next();
+        n = range.next();
       return n;
     }
 
   private:
-    Iterator iterator;
+    Range range;
   }
 
-  Filter filter(Iterator iterator) {
-    return Filter(iterator);
+  Filter filter(Range range) {
+    return Filter(range);
+  }
+}
+
+unittest {
+  import std.array : staticArray;
+
+  const xs = [1, 5, 3, 2, 4].staticArray;
+  assert(xs.iterate.fold!"a + b"(0) == 0);
+}
+
+/// fold
+template fold(alias reducer, Range, U) if (isForwardRange!Range) {
+  import std.functional : binaryFun;
+
+  import optional : Optional, Nothing;
+  import variant : match;
+
+  alias r = binaryFun!reducer;
+  alias T = ElementType!Range;
+
+  U fold(Range range, U acc) {
+    while (range.next().match!((T t) { acc = r(acc, t); return true; }, _ => false)) {
+    }
+    return acc;
   }
 }
