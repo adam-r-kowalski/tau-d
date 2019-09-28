@@ -52,9 +52,11 @@ unittest {
 template iterate(T : U[n], U, size_t n) {
   import optional : Optional, Nothing;
 
+  alias O = Optional!U;
+
   struct Iterate {
-    Optional!U next() {
-      return index < data.length ? Optional!U(data[index++]) : Optional!U(Nothing());
+    O next() {
+      return index < data.length ? O(data[index++]) : O(Nothing());
     }
 
   private:
