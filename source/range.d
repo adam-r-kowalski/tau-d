@@ -107,3 +107,41 @@ template map(alias fun, Iterator) {
     return Map(iterator);
   }
 }
+
+unittest {
+  import std.array : staticArray;
+
+  import variant : match;
+
+  const xs = [1, 5, 3, 2, 4].staticArray;
+  auto iterator = xs.iterate.filter!"a % 2 == 0";
+  assert(iterator.next().match!((int x) => x == 2, _ => false));
+  assert(iterator.next().match!((int x) => x == 4, _ => false));
+}
+
+/// filter
+template filter(alias pred, Iterator) {
+  import std.functional : unaryFun;
+
+  import optional : Optional, Nothing;
+  import variant : match;
+
+  alias p = unaryFun!pred;
+  alias T = ElementType!Iterator;
+
+  struct Filter {
+    Optional!T next() {
+      auto n = iterator.next();
+      while (!n.match!((T t) => p(t), _ => true))
+        n = iterator.next();
+      return n;
+    }
+
+  private:
+    Iterator iterator;
+  }
+
+  Filter filter(Iterator iterator) {
+    return Filter(iterator);
+  }
+}
