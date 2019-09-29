@@ -9,7 +9,7 @@ unittest {
   static assert(a.match!((int) => true, _ => false));
 }
 
-/// Optional2
+/// Optional
 template Optional(T) {
   import variant : Variant;
 
