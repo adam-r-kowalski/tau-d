@@ -35,7 +35,7 @@ template ElementType(T) if (isForwardRange!T) {
 unittest {
   import std.array : staticArray;
 
-  import variant : match;
+  import optional : match;
 
   const xs = [1, 5, 3, 2].staticArray;
   auto range = xs.iterate;
@@ -50,13 +50,11 @@ unittest {
 
 /// iterate
 template iterate(T : U[n], U, size_t n) {
-  import optional : Optional, Nothing;
-
-  alias O = Optional!U;
+  import optional : Optional, optional;
 
   struct Iterate {
-    O next() {
-      return index < data.length ? O(data[index++]) : O(Nothing());
+    Optional!U next() {
+      return index < data.length ? optional!U(data[index++]) : optional!U();
     }
 
   private:
@@ -72,7 +70,7 @@ template iterate(T : U[n], U, size_t n) {
 unittest {
   import std.array : staticArray;
 
-  import variant : match;
+  import optional : match;
 
   const xs = [1, 5, 3, 2].staticArray;
   auto range = xs.iterate.map!"a^^2";
@@ -89,7 +87,7 @@ unittest {
 template map(alias fun, Range) if (isForwardRange!Range) {
   import std.functional : unaryFun;
 
-  import optional : Optional, Nothing, map;
+  import optional : Optional, map;
   import variant : match;
 
   alias f = unaryFun!fun;
@@ -113,7 +111,7 @@ template map(alias fun, Range) if (isForwardRange!Range) {
 unittest {
   import std.array : staticArray;
 
-  import variant : match;
+  import optional : match;
 
   const xs = [1, 5, 3, 2, 4].staticArray;
   auto range = xs.iterate.filter!"a % 2 == 0";
@@ -128,8 +126,7 @@ unittest {
 template filter(alias pred, Range) if (isForwardRange!Range) {
   import std.functional : unaryFun;
 
-  import optional : Optional, Nothing;
-  import variant : match;
+  import optional : Optional, Nothing, match;
 
   alias p = unaryFun!pred;
   alias T = ElementType!Range;
@@ -162,8 +159,7 @@ unittest {
 template fold(alias reducer, Range, U) if (isForwardRange!Range) {
   import std.functional : binaryFun;
 
-  import optional : Optional, Nothing;
-  import variant : match;
+  import optional : Optional, Nothing, match;
 
   alias r = binaryFun!reducer;
   alias T = ElementType!Range;

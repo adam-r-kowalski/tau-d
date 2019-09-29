@@ -1,18 +1,45 @@
 @nogc @safe pure nothrow:
 
-import variant : Variant, match;
-
-unittest {
-  enum a = Optional!int(5);
-  static assert(a.match!((int) => true, _ => false));
-}
-
 /// Nothing
 struct Nothing {
 }
 
-/// Optional
-alias Optional(T) = Variant!(T, Nothing);
+unittest {
+  enum a = optional(5);
+  static assert(a.match!((int) => true, _ => false));
+}
+
+/// Optional2
+template Optional(T) {
+  import variant : Variant;
+
+  struct Optional {
+  private:
+    Variant!(T, Nothing) data;
+  }
+}
+
+/// optional
+template optional(T) {
+  import variant : Variant;
+
+  Optional!T optional(T value) {
+    return Optional!T(Variant!(T, Nothing)(value));
+  }
+
+  Optional!T optional() {
+    return Optional!T(Variant!(T, Nothing)(Nothing()));
+  }
+}
+
+/// match
+template match(funs...) {
+  import variant : match;
+
+  auto match(T)(Optional!T optional) {
+    return optional.data.match!funs;
+  }
+}
 
 unittest {
   alias A = Optional!int;
@@ -25,7 +52,7 @@ unittest {
 }
 
 /// isOptional
-enum bool isOptional(T) = is(T : Variant!(U, Nothing), U);
+enum bool isOptional(T) = is(ElementType!T);
 
 unittest {
   alias A = Optional!int;
@@ -35,22 +62,22 @@ unittest {
   static assert(is(ElementType!B == bool));
 }
 
-alias ElementType(T : Variant!(U, Nothing), U) = U;
+alias ElementType(T : Optional!U, U) = U;
 
 unittest {
-  enum a = Optional!int(5);
+  enum a = optional(5);
   enum b = a.map!"a^^2";
   static assert(b.match!((int x) => x == 25, _ => false));
 }
 
 unittest {
-  enum a = Optional!int(7);
+  enum a = optional(7);
   enum b = a.map!"a^^2";
   static assert(b.match!((int x) => x == 49, _ => false));
 }
 
 unittest {
-  enum a = Optional!int(Nothing());
+  enum a = optional!int();
   enum b = a.map!"a^^2";
   static assert(b.match!((int) => false, _ => true));
 }
@@ -63,12 +90,7 @@ template map(alias fun, O) if (isOptional!O) {
   alias T = ElementType!O;
   alias U = typeof(f(T.init));
 
-  Optional!U map(O optional) {
-    // dfmt off
-    return optional.match!(
-      (T t) => Optional!U(f(t)),
-      _ => Optional!U(Nothing())
-    );
-    // dfmt on
+  Optional!U map(O o) {
+    return o.match!((T t) => optional(f(t)), _ => optional!U());
   }
 }

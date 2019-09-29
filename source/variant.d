@@ -151,6 +151,16 @@ template match(funs...) {
   }
 }
 
+unittest {
+  static assert(isVariant!(Variant!(int, float, bool)));
+  static assert(isVariant!(Variant!(int[3], char, bool[])));
+  static assert(!isVariant!int);
+  static assert(!isVariant!float);
+  static assert(!isVariant!bool);
+}
+
+enum bool isVariant(T) = is(typeof(T.init.match!(_ => true)));
+
 private:
 
 unittest {
