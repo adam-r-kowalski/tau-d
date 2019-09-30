@@ -101,6 +101,61 @@ template rowMajor(size_t N) {
 unittest {
   enum layout = columnMajor([2, 3, 4]);
   static assert(layout.stride == [1, 2, 6]);
+  static assert(layout.linearIndex(0, 0, 0) == 0);
+  static assert(layout.linearIndex(1, 0, 0) == 1);
+  static assert(layout.linearIndex(0, 1, 0) == 2);
+  static assert(layout.linearIndex(1, 1, 0) == 3);
+  static assert(layout.linearIndex(0, 2, 0) == 4);
+  static assert(layout.linearIndex(1, 2, 0) == 5);
+  static assert(layout.linearIndex(0, 0, 1) == 6);
+  static assert(layout.linearIndex(1, 0, 1) == 7);
+  static assert(layout.linearIndex(0, 1, 1) == 8);
+  static assert(layout.linearIndex(1, 1, 1) == 9);
+  static assert(layout.linearIndex(0, 2, 1) == 10);
+  static assert(layout.linearIndex(1, 2, 1) == 11);
+  static assert(layout.linearIndex(0, 0, 2) == 12);
+  static assert(layout.linearIndex(1, 0, 2) == 13);
+  static assert(layout.linearIndex(0, 1, 2) == 14);
+  static assert(layout.linearIndex(1, 1, 2) == 15);
+  static assert(layout.linearIndex(0, 2, 2) == 16);
+  static assert(layout.linearIndex(1, 2, 2) == 17);
+  static assert(layout.linearIndex(0, 0, 3) == 18);
+  static assert(layout.linearIndex(1, 0, 3) == 19);
+  static assert(layout.linearIndex(0, 1, 3) == 20);
+  static assert(layout.linearIndex(1, 1, 3) == 21);
+  static assert(layout.linearIndex(0, 2, 3) == 22);
+  static assert(layout.linearIndex(1, 2, 3) == 23);
+}
+
+unittest {
+  import std.array : staticArray;
+
+  const layout = columnMajor([2, 3, 4]);
+  assert(layout.stride == [1, 2, 6].staticArray);
+  assert(layout.linearIndex(0, 0, 0) == 0);
+  assert(layout.linearIndex(1, 0, 0) == 1);
+  assert(layout.linearIndex(0, 1, 0) == 2);
+  assert(layout.linearIndex(1, 1, 0) == 3);
+  assert(layout.linearIndex(0, 2, 0) == 4);
+  assert(layout.linearIndex(1, 2, 0) == 5);
+  assert(layout.linearIndex(0, 0, 1) == 6);
+  assert(layout.linearIndex(1, 0, 1) == 7);
+  assert(layout.linearIndex(0, 1, 1) == 8);
+  assert(layout.linearIndex(1, 1, 1) == 9);
+  assert(layout.linearIndex(0, 2, 1) == 10);
+  assert(layout.linearIndex(1, 2, 1) == 11);
+  assert(layout.linearIndex(0, 0, 2) == 12);
+  assert(layout.linearIndex(1, 0, 2) == 13);
+  assert(layout.linearIndex(0, 1, 2) == 14);
+  assert(layout.linearIndex(1, 1, 2) == 15);
+  assert(layout.linearIndex(0, 2, 2) == 16);
+  assert(layout.linearIndex(1, 2, 2) == 17);
+  assert(layout.linearIndex(0, 0, 3) == 18);
+  assert(layout.linearIndex(1, 0, 3) == 19);
+  assert(layout.linearIndex(0, 1, 3) == 20);
+  assert(layout.linearIndex(1, 1, 3) == 21);
+  assert(layout.linearIndex(0, 2, 3) == 22);
+  assert(layout.linearIndex(1, 2, 3) == 23);
 }
 
 /// columnMajor
