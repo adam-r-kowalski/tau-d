@@ -97,3 +97,34 @@ template rowMajor(size_t N) {
     return RowMajor(stride);
   }
 }
+
+unittest {
+  enum layout = columnMajor([2, 3, 4]);
+  static assert(layout.stride == [1, 2, 6]);
+}
+
+/// columnMajor
+template columnMajor(size_t N) {
+  struct ColumnMajor {
+    size_t[N] stride;
+
+    size_t linearIndex(Indices...)(Indices indices) const if (Indices.length == N) {
+      import std.algorithm : fold, map;
+      import range : zip;
+
+      size_t[N] cartesian_index = [indices];
+      return stride[].zip(cartesian_index[]).map!"a[0] * a[1]"
+        .fold!"a + b"(size_t(0));
+    }
+  }
+
+  ColumnMajor columnMajor(auto ref const size_t[N] shape) {
+    import std.range : retro;
+    import std.algorithm : cumulativeFold, copy;
+
+    size_t[N] stride;
+    stride[0] = 1;
+    shape[0 .. $ - 1].cumulativeFold!"a * b".copy(stride[1 .. $]);
+    return ColumnMajor(stride);
+  }
+}
