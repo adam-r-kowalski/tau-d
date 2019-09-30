@@ -21,24 +21,30 @@ unittest {
 }
 
 unittest {
-  static assert(isTensor!(Tensor!(int, 4, 5, 7)));
-  static assert(isTensor!(Tensor!(float, 3, 2, 7)));
+  static assert(isTensor!(typeof(tensor!(int, 4, 5, 7)())));
+  static assert(isTensor!(typeof(tensor!(float, 3, 2, 7)())));
   static assert(!isTensor!int);
   static assert(!isTensor!string);
 }
 
 /// Tensor
-struct Tensor(T, Dims...) {
-}
+template tensor(T, Dims...) {
+  struct Tensor {
+    import algorithm : product;
 
-/// tensor
-Tensor!(T, Dims) tensor(T, Dims...)() {
-  return Tensor!(T, Dims)();
-}
+    immutable size_t[Dims.length] shape = [Dims];
 
-/// shape
-size_t[Dims.length] shape(T, Dims...)(ref auto const Tensor!(T, Dims)) {
-  return [Dims];
+    ref T opIndex(Indices...)(Indices _) if (Indices.length == Dims.length) {
+      return data[0];
+    }
+
+  private:
+    T[[Dims].product] data;
+  }
+
+  Tensor tensor() {
+    return Tensor();
+  }
 }
 
 unittest {
@@ -78,10 +84,14 @@ unittest {
   assert(b.length == 7 * 3 * 5);
 }
 
-/// rank
+/// length
 size_t length(T)(ref auto const T t) if (isTensor!T) {
-  size_t result = 1;
-  foreach (e; t.shape)
-    result *= e;
-  return result;
+  import algorithm : product;
+
+  return t.shape[].product;
+}
+
+unittest {
+  enum a = tensor!(int, 3, 2);
+  static assert(a[0, 0] == 0);
 }
