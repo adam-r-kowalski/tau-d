@@ -32,18 +32,30 @@ template tensor(T, Dims...) {
   struct Tensor {
     import algorithm : product;
 
-    immutable size_t[Dims.length] shape = [Dims];
+    immutable size_t rank = Dims.length;
+    immutable size_t[rank] shape = [Dims];
+    immutable size_t length = [Dims].product;
+    immutable size_t[rank] stride;
 
-    ref T opIndex(Indices...)(Indices _) if (Indices.length == Dims.length) {
-      return data[0];
+    this(T[length] data) {
+      import layout : rowMajor;
+
+      stride = rowMajor(shape);
+    }
+
+    ref T opIndex(Indices...)(Indices indices) if (Indices.length == Dims.length) {
+      import layout : linearIndex;
+
+      return data[linearIndex(stride, [indices])];
     }
 
   private:
-    T[[Dims].product] data;
+    T[length] data;
   }
 
   Tensor tensor() {
-    return Tensor();
+    T[Tensor.length] data;
+    return Tensor(data);
   }
 }
 
@@ -63,11 +75,6 @@ unittest {
   assert(b.rank == 3);
 }
 
-/// rank
-size_t rank(T)(ref auto const T t) if (isTensor!T) {
-  return t.shape.length;
-}
-
 unittest {
   enum a = tensor!(int, 1, 3);
   enum b = tensor!(int, 4, 9, 2, 1);
@@ -84,14 +91,26 @@ unittest {
   assert(b.length == 7 * 3 * 5);
 }
 
-/// length
-size_t length(T)(ref auto const T t) if (isTensor!T) {
-  import algorithm : product;
-
-  return t.shape[].product;
-}
-
 unittest {
-  enum a = tensor!(int, 3, 2);
-  static assert(a[0, 0] == 0);
+  auto a = tensor!(int, 3, 2);
+  assert(a[0, 0] == 0);
+  assert(a[0, 1] == 0);
+  assert(a[1, 0] == 0);
+  assert(a[1, 1] == 0);
+  assert(a[2, 0] == 0);
+  assert(a[2, 1] == 0);
+
+  a[0, 0] = 0;
+  a[0, 1] = 1;
+  a[1, 0] = 2;
+  a[1, 1] = 3;
+  a[2, 0] = 4;
+  a[2, 1] = 5;
+
+  assert(a[0, 0] == 0);
+  assert(a[0, 1] == 1);
+  assert(a[1, 0] == 2);
+  assert(a[1, 1] == 3);
+  assert(a[2, 0] == 4);
+  assert(a[2, 1] == 5);
 }
