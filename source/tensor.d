@@ -57,6 +57,13 @@ template tensor(T, Dims...) {
       data[linearIndex(stride, [indices])] = value;
     }
 
+    Tensor opBinary(string op)(auto ref const Tensor other) const 
+        if (op == "+" || op == "-") {
+      T[length] new_data;
+      mixin("new_data[] = this.data[] " ~ op ~ " other.data[];");
+      return Tensor(new_data);
+    }
+
   private:
     T[length] data;
   }
@@ -155,4 +162,44 @@ unittest {
   assert(a[1, 1] == 4);
   assert(a[2, 0] == 5);
   assert(a[2, 1] == 6);
+}
+
+unittest {
+  enum a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  enum b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  enum c = tensor!(int, 3, 2)(100, 200, 300, 400, 500, 600);
+  assert(a == b);
+  assert(a != c);
+  assert(b != c);
+}
+
+unittest {
+  const a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  const b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  const c = tensor!(int, 3, 2)(100, 200, 300, 400, 500, 600);
+  assert(a == b);
+  assert(a != c);
+  assert(b != c);
+}
+
+unittest {
+  auto a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  const b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  assert(a == b);
+  a[0, 0] = 100;
+  assert(a != b);
+}
+
+unittest {
+  const a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  const b = a + a;
+  const c = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
+  assert(b == c);
+}
+
+unittest {
+  const a = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
+  const b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  const c = a - b;
+  assert(c == b);
 }
