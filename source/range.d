@@ -19,6 +19,8 @@ unittest {
   assert(!c.empty);
   c.popFront();
   assert(c.front == tuple(3, true));
+  assert(!c.empty);
+  c.popFront();
   assert(c.empty);
 }
 

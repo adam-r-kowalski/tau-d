@@ -1,4 +1,4 @@
-import traits, tensor, variant, optional;
+import optional, traits, algorithm, range, tensor, variant, meta, layout;
 
 /// moduleOf
 template moduleOf(alias T) {
@@ -11,7 +11,7 @@ template moduleOf(alias T) {
 extern (C) int main() {
   import std.typetuple : AliasSeq;
 
-  static foreach (m; AliasSeq!(traits, tensor, variant, optional))
+  static foreach (m; AliasSeq!(optional, traits, algorithm, range, tensor, variant, meta, layout))
     static foreach (u; __traits(getUnitTests, moduleOf!m))
       u();
 
