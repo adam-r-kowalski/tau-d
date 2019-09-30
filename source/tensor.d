@@ -29,9 +29,9 @@ unittest {
 
 /// Tensor
 template tensor(T, Dims...) {
-  struct Tensor {
-    import algorithm : product;
+  import algorithm : product;
 
+  struct Tensor {
     immutable size_t rank = Dims.length;
     immutable size_t[rank] shape = [Dims];
     immutable size_t length = [Dims].product;
@@ -41,12 +41,20 @@ template tensor(T, Dims...) {
       import layout : rowMajor;
 
       stride = rowMajor(shape);
+      this.data = data;
     }
 
-    ref T opIndex(Indices...)(Indices indices) if (Indices.length == Dims.length) {
+    T opIndex(Indices...)(Indices indices) const if (Indices.length == Dims.length) {
       import layout : linearIndex;
 
       return data[linearIndex(stride, [indices])];
+    }
+
+    void opIndexAssign(Indices...)(T value, Indices indices)
+        if (Indices.length == Dims.length) {
+      import layout : linearIndex;
+
+      data[linearIndex(stride, [indices])] = value;
     }
 
   private:
@@ -56,6 +64,10 @@ template tensor(T, Dims...) {
   Tensor tensor() {
     T[Tensor.length] data;
     return Tensor(data);
+  }
+
+  Tensor tensor(Ts...)(Ts data) if (Ts.length == [Dims].product) {
+    return Tensor([data]);
   }
 }
 
@@ -113,4 +125,34 @@ unittest {
   assert(a[1, 1] == 3);
   assert(a[2, 0] == 4);
   assert(a[2, 1] == 5);
+}
+
+unittest {
+  enum a = tensor!(int, 3, 2);
+  static assert(a[0, 0] == 0);
+  static assert(a[0, 1] == 0);
+  static assert(a[1, 0] == 0);
+  static assert(a[1, 1] == 0);
+  static assert(a[2, 0] == 0);
+  static assert(a[2, 1] == 0);
+}
+
+unittest {
+  enum a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  static assert(a[0, 0] == 1);
+  static assert(a[0, 1] == 2);
+  static assert(a[1, 0] == 3);
+  static assert(a[1, 1] == 4);
+  static assert(a[2, 0] == 5);
+  static assert(a[2, 1] == 6);
+}
+
+unittest {
+  const a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
+  assert(a[0, 0] == 1);
+  assert(a[0, 1] == 2);
+  assert(a[1, 0] == 3);
+  assert(a[1, 1] == 4);
+  assert(a[2, 0] == 5);
+  assert(a[2, 1] == 6);
 }
