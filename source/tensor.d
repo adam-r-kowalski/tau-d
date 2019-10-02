@@ -28,56 +28,80 @@ unittest {
 }
 
 /// Tensor
-template tensor(T, Dims...) {
+struct Tensor(T, Dims...) {
   import algorithm : product;
   import layout : rowMajor;
 
-  struct Tensor {
-    immutable size_t rank = Dims.length;
-    immutable size_t[rank] shape = [Dims];
-    immutable size_t length = [Dims].product;
-    immutable size_t[rank] stride = rowMajor([Dims]);
+  immutable size_t rank = Dims.length;
+  immutable size_t[rank] shape = [Dims];
+  immutable size_t length = [Dims].product;
+  immutable size_t[rank] stride = rowMajor([Dims]);
 
-    this(T[length] data) {
-      this.data = data;
-    }
-
-    T opIndex(Indices...)(Indices indices) const if (Indices.length == Dims.length) {
-      import layout : linearIndex;
-
-      static foreach (i; 0 .. Indices.length)
-        assert(indices[i] >= 0 && indices[i] < Dims[i]);
-
-      return data[linearIndex(stride, [indices])];
-    }
-
-    void opIndexAssign(Indices...)(T value, Indices indices)
-        if (Indices.length == Dims.length) {
-      import layout : linearIndex;
-
-      static foreach (i; 0 .. Indices.length)
-        assert(indices[i] >= 0 && indices[i] < Dims[i]);
-
-      data[linearIndex(stride, [indices])] = value;
-    }
-
-    Tensor opBinary(string op)(auto ref const Tensor other) const 
-        if (op == "+" || op == "-") {
-      auto result = Tensor();
-      mixin("result.data[] = this.data[] " ~ op ~ " other.data[];");
-      return result;
-    }
-
-  private:
-    T[length] data;
+  this(T[length] data) {
+    this.data = data;
   }
 
-  Tensor tensor() {
-    return Tensor();
+  T opIndex(Indices...)(Indices indices) const if (Indices.length == Dims.length) {
+    import layout : linearIndex;
+
+    static foreach (i; 0 .. Indices.length)
+      assert(indices[i] >= 0 && indices[i] < Dims[i]);
+
+    return data[linearIndex(stride, [indices])];
   }
 
-  Tensor tensor(Ts...)(Ts data) if (Ts.length == Tensor.init.length) {
-    return Tensor([data]);
+  void opIndexAssign(Indices...)(T value, Indices indices)
+      if (Indices.length == Dims.length) {
+    import layout : linearIndex;
+
+    static foreach (i; 0 .. Indices.length)
+      assert(indices[i] >= 0 && indices[i] < Dims[i]);
+
+    data[linearIndex(stride, [indices])] = value;
+  }
+
+  void opIndexOpAssign(string op, Indices...)(T value, Indices indices)
+      if (Indices.length == Dims.length) {
+    import layout : linearIndex;
+
+    static foreach (i; 0 .. Indices.length)
+      assert(indices[i] >= 0 && indices[i] < Dims[i]);
+
+    mixin("data[linearIndex(stride, [indices])] " ~ op ~ "= value;");
+  }
+
+  /// tensor addition and subtraction
+  Tensor opBinary(string op)(auto ref const Tensor other) const 
+      if (op == "+" || op == "-") {
+    auto result = Tensor();
+    mixin("result.data[] = this.data[] " ~ op ~ " other.data[];");
+    return result;
+  }
+
+  /// matrix multiplication
+  auto opBinary(string op, O)(auto ref const O other) const 
+      if (op == "*" && isTensor!O && Dims[1] == O.init.shape[0]) {
+    enum int M = Dims[0], P = Dims[1], N = O.init.shape[1];
+    auto result = Tensor!(T, M, N)();
+    foreach (i; 0 .. M)
+      foreach (j; 0 .. N)
+        foreach (k; 0 .. P)
+          result[i, j] += this[i, k] * other[k, j];
+    return result;
+  }
+
+private:
+  T[length] data;
+}
+
+template tensor(T, Dims...) {
+  Tensor!(T, Dims) tensor() {
+    return Tensor!(T, Dims)();
+  }
+
+  Tensor!(T, Dims) tensor(Ts...)(Ts data)
+      if (Ts.length == Tensor!(T, Dims).init.length) {
+    return Tensor!(T, Dims)([data]);
   }
 }
 
@@ -168,6 +192,44 @@ unittest {
 }
 
 unittest {
+  auto a = tensor!(int, 3, 2);
+  assert(a[0, 0] == 0);
+  assert(a[0, 1] == 0);
+  assert(a[1, 0] == 0);
+  assert(a[1, 1] == 0);
+  assert(a[2, 0] == 0);
+  assert(a[2, 1] == 0);
+
+  a[0, 0] += 0;
+  a[0, 1] += 1;
+  a[1, 0] += 2;
+  a[1, 1] += 3;
+  a[2, 0] += 4;
+  a[2, 1] += 5;
+
+  assert(a[0, 0] == 0);
+  assert(a[0, 1] == 1);
+  assert(a[1, 0] == 2);
+  assert(a[1, 1] == 3);
+  assert(a[2, 0] == 4);
+  assert(a[2, 1] == 5);
+
+  a[0, 0] += 0;
+  a[0, 1] += 1;
+  a[1, 0] += 2;
+  a[1, 1] += 3;
+  a[2, 0] += 4;
+  a[2, 1] += 5;
+
+  assert(a[0, 0] == 0);
+  assert(a[0, 1] == 2);
+  assert(a[1, 0] == 4);
+  assert(a[1, 1] == 6);
+  assert(a[2, 0] == 8);
+  assert(a[2, 1] == 10);
+}
+
+unittest {
   enum a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
   enum b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
   enum c = tensor!(int, 3, 2)(100, 200, 300, 400, 500, 600);
@@ -194,6 +256,14 @@ unittest {
 }
 
 unittest {
+  auto a = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
+  const b = a;
+  assert(a == b);
+  a[0, 0] = 100;
+  assert(a != b);
+}
+
+unittest {
   const a = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
   const b = a + a;
   const c = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
@@ -205,4 +275,22 @@ unittest {
   const b = tensor!(int, 3, 2)(1, 2, 3, 4, 5, 6);
   const c = a - b;
   assert(c == b);
+}
+
+unittest {
+  enum a = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
+  enum b = tensor!(int, 2, 3)(1, 2, 3, 4, 5, 6);
+  enum c = a * b;
+  static assert(is(typeof(c) == Tensor!(int, 3, 3)));
+  enum d = tensor!(int, 3, 3)(18, 24, 30, 38, 52, 66, 58, 80, 102);
+  static assert(c == d);
+}
+
+unittest {
+  const a = tensor!(int, 3, 2)(2, 4, 6, 8, 10, 12);
+  const b = tensor!(int, 2, 3)(1, 2, 3, 4, 5, 6);
+  const c = a * b;
+  static assert(is(typeof(c) == const Tensor!(int, 3, 3)));
+  const d = tensor!(int, 3, 3)(18, 24, 30, 38, 52, 66, 58, 80, 102);
+  assert(c == d);
 }
