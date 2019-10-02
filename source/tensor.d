@@ -30,22 +30,23 @@ unittest {
 /// Tensor
 template tensor(T, Dims...) {
   import algorithm : product;
+  import layout : rowMajor;
 
   struct Tensor {
     immutable size_t rank = Dims.length;
     immutable size_t[rank] shape = [Dims];
     immutable size_t length = [Dims].product;
-    immutable size_t[rank] stride;
+    immutable size_t[rank] stride = rowMajor([Dims]);
 
     this(T[length] data) {
-      import layout : rowMajor;
-
-      stride = rowMajor(shape);
       this.data = data;
     }
 
     T opIndex(Indices...)(Indices indices) const if (Indices.length == Dims.length) {
       import layout : linearIndex;
+
+      static foreach (i; 0 .. Indices.length)
+        assert(indices[i] >= 0 && indices[i] < Dims[i]);
 
       return data[linearIndex(stride, [indices])];
     }
@@ -54,14 +55,17 @@ template tensor(T, Dims...) {
         if (Indices.length == Dims.length) {
       import layout : linearIndex;
 
+      static foreach (i; 0 .. Indices.length)
+        assert(indices[i] >= 0 && indices[i] < Dims[i]);
+
       data[linearIndex(stride, [indices])] = value;
     }
 
     Tensor opBinary(string op)(auto ref const Tensor other) const 
         if (op == "+" || op == "-") {
-      T[length] new_data;
-      mixin("new_data[] = this.data[] " ~ op ~ " other.data[];");
-      return Tensor(new_data);
+      auto result = Tensor();
+      mixin("result.data[] = this.data[] " ~ op ~ " other.data[];");
+      return result;
     }
 
   private:
@@ -69,11 +73,10 @@ template tensor(T, Dims...) {
   }
 
   Tensor tensor() {
-    T[Tensor.length] data;
-    return Tensor(data);
+    return Tensor();
   }
 
-  Tensor tensor(Ts...)(Ts data) if (Ts.length == [Dims].product) {
+  Tensor tensor(Ts...)(Ts data) if (Ts.length == Tensor.init.length) {
     return Tensor([data]);
   }
 }
